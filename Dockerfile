@@ -3,8 +3,11 @@ FROM python:3.9-slim
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
-COPY bot.py .
+COPY . .
 
-CMD ["python", "bot.py"] 
+# Tạo thư mục data và set quyền
+RUN mkdir -p /app/data && chmod 777 /app/data
+
+CMD ["python", "bot.py"]

@@ -15,7 +15,8 @@ load_dotenv()
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 API_PHAT_NGUOI = os.getenv("API_PHAT_NGUOI", "https://api.checkphatnguoi.vn/phatnguoi")
 
-DATA_FILE = "registered_plates.json"
+DATA_DIR = "/app/data"
+DATA_FILE = os.path.join(DATA_DIR, "registered_plates.json")
 
 registered_plates = {}
 pending_registrations = set()
@@ -23,6 +24,8 @@ pending_registrations = set()
 # Lưu dữ liệu vào file JSON
 def save_data():
     """Lưu dữ liệu ra File"""
+    # Tạo thư mục nếu chưa tồn tại
+    os.makedirs(DATA_DIR, exist_ok=True)
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(registered_plates, f, ensure_ascii=False, indent=4)
 

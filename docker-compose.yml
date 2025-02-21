@@ -21,6 +21,7 @@ services:
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
     volumes:
-      - ./registered_plates.json:/app/registered_plates.json
+      - bot-data:/app/data
 volumes:
   portainer_data:
+  bot-data:
