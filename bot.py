@@ -157,11 +157,11 @@ async def huongdan(update: Update, context: CallbackContext) -> None:
 async def lienhe(update: Update, context: CallbackContext) -> None:
     contact_text = (
         "📞 Thông tin liên hệ:\n"
-        "🌐 Website: https://theloi.io.vn\n"
+        "🌐 Website: https://nguyenanh98.com\n"
         "🔥 Bot kiểm tra phạt nguội 🔥\n"
-        "👤 Tác giả: Nguyễn Thế Lợi\n"
-        "📞 SĐT: 0963 159 294\n"
-        "👮 Facebook: https://www.facebook.com/Lowji194"
+        # "👤 Tác giả: Nguyễn Thế Lợi\n"
+        # "📞 SĐT: 0963 159 294\n"
+        # "👮 Facebook: https://www.facebook.com/Lowji194"
     )
 
     if update.message:
