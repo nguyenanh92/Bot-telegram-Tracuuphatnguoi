@@ -7,9 +7,13 @@ import threading
 import re
 from telegram import Update, BotCommand, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext, CallbackQueryHandler
+from dotenv import load_dotenv
 
-TELEGRAM_BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
-API_PHAT_NGUOI = "https://api.checkphatnguoi.vn/phatnguoi"
+# Load environment variables
+load_dotenv()
+
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+API_PHAT_NGUOI = os.getenv("API_PHAT_NGUOI", "https://api.checkphatnguoi.vn/phatnguoi")
 
 DATA_FILE = "registered_plates.json"
 
@@ -35,6 +39,9 @@ def load_data():
 # Tải dữ liệu khi bot khởi động
 load_data()
 
+# Validate required environment variables
+if not TELEGRAM_BOT_TOKEN:
+    raise ValueError("TELEGRAM_BOT_TOKEN environment variable is not set")
 
 async def check_violation(plate_number):
     """Request API kiểm tra dữ liệu biển số"""
