@@ -1,17 +1,4 @@
 services:
-  portainer:
-    image: portainer/portainer-ce:latest
-    container_name: portainer
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - portainer_data:/data
-    ports:
-      - "9443:9443"
-      - "9001:9000"  # Thay đổi cổng 9000 thành 9001 để tránh xung đột
   telegram-bot:
     build:
       context: .
@@ -20,8 +7,8 @@ services:
     restart: unless-stopped
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+    command: python bot.py
     volumes:
       - bot-data:/app/data
 volumes:
-  portainer_data:
   bot-data:
