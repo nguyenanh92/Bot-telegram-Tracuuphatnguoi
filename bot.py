@@ -13,7 +13,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-API_PHAT_NGUOI = os.getenv("API_PHAT_NGUOI", "https://api.checkphatnguoi.vn/phatnguoi")
+# API_PHAT_NGUOI = os.getenv("API_PHAT_NGUOI", "https://api.checkphatnguoi.vn/phatnguoi")
+API_PHAT_NGUOI = os.getenv("API_PHAT_NGUOI_2", "https://api.zm.io.vn/v1/csgt/tracuu")
 
 DATA_DIR = "/app/data"
 DATA_FILE = os.path.join(DATA_DIR, "registered_plates.json")
@@ -47,53 +48,50 @@ if not TELEGRAM_BOT_TOKEN:
     raise ValueError("TELEGRAM_BOT_TOKEN environment variable is not set")
 
 async def check_violation(plate_number):
-    """Request API kiểm tra dữ liệu biển số"""
+    """Request API kiểm tra dữ liệu biển số sử dụng method GET"""
     try:
-        response = requests.post(API_PHAT_NGUOI, json={"bienso": plate_number})
+        # Tạo URL với tham số query string
+        url = f"{API_PHAT_NGUOI}?licensePlate={plate_number}"
+        
+        # Thực hiện request GET
+        response = requests.get(url)
         data = response.json()
+        print("Response data:", data)  # Debug log
+        
+        # Kiểm tra message trước
+        if data.get("message") == "Không tìm thấy vi phạm":
+            return f"✅ Biển số {plate_number} chưa phát hiện lỗi phạt nguội."
 
-        # Kiểm tra nếu API trả về lỗi
-        if "error" in data:
-            return f"❌ {data['error']}"
+        # Kiểm tra cấu trúc dữ liệu và đảm bảo có vi phạm
+        if (
+            "data" in data 
+            and isinstance(data["data"], dict)
+            and "json" in data["data"] 
+            and isinstance(data["data"]["json"], list) 
+            and len(data["data"]["json"]) > 0
+        ):
+            violations = data["data"]["json"]
+            results = []
+            for item in violations:
+                # Sử dụng dict.get() để tránh KeyError
+                result = (
+                    f"🚗 Biển số: {item.get('bienkiemsoat', 'Không có thông tin')}\n"
+                    f"🔹 Loại xe: {item.get('loaiphuongtien', 'Không có thông tin')}\n"
+                    f"🎨 Màu biển: {item.get('maubien', 'Không có thông tin')}\n"
+                    f"⏰ Thời gian vi phạm: {item.get('thoigianvipham', 'Không có thông tin')}\n"
+                    f"📍 Địa điểm: {item.get('diadiemvipham', 'Không có thông tin')}\n"
+                    f"⚠️ Hành vi vi phạm: {item.get('hanhvivipham', 'Không có thông tin')}\n"
+                    f"{'🟥' if item.get('trangthai') == 'Chưa xử phạt' else '🟩'} Trạng thái: {item.get('trangthai', 'Không có thông tin')}\n"
+                    f"👮 Đơn vị phát hiện: {item.get('donviphathienvipham', 'Không có thông tin')}\n"
+                    f"🏢 Nơi giải quyết:\n{chr(10).join(f'🏢 {x}' for x in item.get('noigiaiquyetvuviec', []))}\n"
+                    "——————————————"
+                )
+                results.append(result)
 
-        # Kiểm tra nếu "data" không tồn tại hoặc không phải danh sách
-        if "data" not in data or not isinstance(data["data"], list):
-            return "✅ Biển số {plate_number} chưa phát hiện lỗi phạt nguội."
-
-        # Tạo danh sách kết quả từ dữ liệu API
-        results = []
-        for item in data["data"]:
-            bien_kiem_soat = item.get("Biển kiểm soát", "Không có thông tin")
-            loai_phuong_tien = item.get("Loại phương tiện", "Không có thông tin")
-            thoi_gian_vi_pham = item.get("Thời gian vi phạm", "Không có thông tin")
-            dia_diem_vi_pham = item.get("Địa điểm vi phạm", "Không có thông tin")
-            hanh_vi_vi_pham = item.get("Hành vi vi phạm", "Không có thông tin")
-            trang_thai = item.get("Trạng thái", "Không có thông tin")
-            noi_giai_quyet = item.get("Nơi giải quyết vụ việc", [])
-
-            # Xử lý danh sách nơi giải quyết (nếu có)
-            if isinstance(noi_giai_quyet, list):
-                noi_giai_quyet_str = "\n".join([f"🏢 {ngq}" for ngq in noi_giai_quyet])
-            else:
-                noi_giai_quyet_str = "Không có thông tin"
-
-            # Xác định màu trạng thái (nếu cần thiết)
-            trang_thai_icon = "🟥" if trang_thai == "Chưa xử phạt" else "🟩"
-
-            result = (
-                f"🚗 Biển số: {bien_kiem_soat}\n"
-                f"🔹 Loại xe: {loai_phuong_tien}\n"
-                f"⏰ Thời gian vi phạm: {thoi_gian_vi_pham}\n"
-                f"📍 Địa điểm: {dia_diem_vi_pham}\n"
-                f"⚠️ Hành vi vi phạm: {hanh_vi_vi_pham}\n"
-                f"{trang_thai_icon} Trạng thái: {trang_thai}\n"
-                f"🏢 Nơi giải quyết:\n{noi_giai_quyet_str}\n"
-                "——————————————"
-            )
-            results.append(result)
-
-        # Trả về danh sách vi phạm
-        return "\n\n".join(results)
+            return "\n\n".join(results)
+        
+        # Nếu không có vi phạm hoặc dữ liệu không đúng cấu trúc
+        return f"✅ Biển số {plate_number} chưa phát hiện lỗi phạt nguội."
 
     except requests.exceptions.RequestException as e:
         return f"⚠️ Lỗi kết nối API: {str(e)}"
